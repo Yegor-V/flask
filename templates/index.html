@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+    <h1>EVO.COMPANY</h1>
+    <h3>Departments:</h3>
+    {% for dept in depts %}
+        <a href="/department/{{ dept.name }}">{{ dept.name }}</a> {{ dept.description }}
+        <button>Delete</button>
+        <br>
+    {% endfor %}
+    <button>Add New Department</button>
+
+{% endblock %}

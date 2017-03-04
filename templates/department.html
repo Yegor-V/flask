@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h2>Department {{ department_name }} <small>(leader: )</small></h2>
+
+    <h4>Positions:</h4>
+    {% for position in positions %}
+        {{ position.name }} - {{ position.description }}
+        <button>Delete Position</button>
+        <small>
+            this will delete position all vacancies for this position and fire all employees from position
+        </small>
+        <br>
+    {% endfor %}
+    <button>Create new Position</button>
+
+    <h4>Vacancies:</h4>
+    {% for vacancy in vacancies %}
+        {{ vacancy }} <button>Delete vacancy</button>
+        <button>Hire New Employee</button>
+        <br>
+    {% endfor %}
+    <button>Create new Vacancy</button>
+
+    <h4>Employees:</h4>
+    {% for employee in employees %}
+        {{ employee }}
+        <button>Fire</button>
+        <button>Change Position</button>
+        <button>Make Department Leader</button>
+        <br>
+    {% endfor %}
+    <button>Create new Vacancy</button>
+
+{% endblock %}
