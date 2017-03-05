@@ -1,15 +1,19 @@
-{% extends 'base.html' %}
-{% block title %}Home{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Evo</title>
+</head>
+<body>
 
-{% block content %}
-
-    <h1>EVO.COMPANY</h1>
+    <h1>RANDOM.COMPANY</h1>
     <h3>Departments:</h3>
     {% for dept in depts %}
         <a href="/department/{{ dept.name }}">{{ dept.name }}</a> {{ dept.description }}
-        <button>Delete</button>
+        <button>Delete</button><small>this will delete all positions vacancies and employees</small>
         <br>
     {% endfor %}
     <button>Add New Department</button>
 
-{% endblock %}
+</body>
+</html>

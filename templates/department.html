@@ -1,8 +1,14 @@
-{% extends 'base.html' %}
-
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ department_name }}</title>
+</head>
+<body>
 
     <h2>Department {{ department_name }} <small>(leader: )</small></h2>
+
+    <a href="/">Home</a>
 
     <h4>Positions:</h4>
     {% for position in positions %}
@@ -31,6 +37,7 @@
         <button>Make Department Leader</button>
         <br>
     {% endfor %}
-    <button>Create new Vacancy</button>
+    <button>Hire new employee</button>
 
-{% endblock %}
+</body>
+</html>
