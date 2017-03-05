@@ -1,8 +1,9 @@
-from flask import Flask, redirect, render_template, request, url_for, jsonify, flash
+from flask import Flask, redirect, render_template, request, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 import time
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
 
@@ -13,12 +14,12 @@ db = SQLAlchemy(app)
 api = Api(app)
 
 
-# MODELS
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    positions = db.relationship('Position', backref='department', lazy='dynamic', cascade='delete')
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    vacancies = db.relationship('Vacancy', backref='department', lazy='dynamic', cascade='delete')
+    employees = db.relationship('Employee', backref='department', lazy='dynamic', cascade='delete')
 
     def __init__(self, name, description):
         self.name = name
@@ -30,16 +31,12 @@ class Department(db.Model):
 
 class Position(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
-    description = db.Column(db.Text)
-    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
-    vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic', cascade='delete')
-    employees = db.relationship('Employee', backref='position', lazy='dynamic', cascade='delete')
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
 
-    def __init__(self, name, description, department_id):
+    def __init__(self, name, description):
         self.name = name
         self.description = description
-        self.department_id = department_id
 
     def __repr__(self):
         return 'Position {}'.format(self.name)
@@ -47,11 +44,13 @@ class Position(db.Model):
 
 class Vacancy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
     date_opened = db.Column(db.BigInteger, nullable=False)
+    position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
 
-    def __init__(self, position_id, date_opened=None):
+    def __init__(self, position_id, department_id, date_opened=None):
         self.position_id = position_id
+        self.department_id = department_id
         if date_opened is None:
             date_opened = int(time.time())
         self.date_opened = date_opened
@@ -62,45 +61,53 @@ class Vacancy(db.Model):
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
-    surname = db.Column(db.String(80), nullable=False)
-    position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
-    email = db.Column(db.String(80))
-    phone = db.Column(db.String(80))
-    birth_date = db.Column(db.String(80))
+    name = db.Column(db.String(50), nullable=False)
+    surname = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50))
+    phone = db.Column(db.String(50))
+    birth_date = db.Column(db.String(50))
     start_work_date = db.Column(db.BigInteger)
+    position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     is_department_leader = db.Column(db.Boolean, default=False)
 
-    def __init__(self, name, surname, position_id, start_work_date=None):
+    def __init__(self, name, surname, position_id, department_id):
         self.name = name
         self.surname = surname
         self.position_id = position_id
-        if start_work_date is None:
-            start_work_date = int(time.time())
-        self.start_work_date = start_work_date
+        self.department_id = department_id
+        self.start_work_date = int(time.time())
 
     def __repr__(self):
         return 'Employee {} {}'.format(self.name, self.surname)
 
 
-# REGULAR VIEWS
 @app.route('/')
 def index():
     all_departments = Department.query.all()
-    return render_template('index.html', depts=all_departments)
+    all_positions = Position.query.all()
+    return render_template('index.html', depts=all_departments, positions=all_positions)
 
 
 @app.route('/department/<department_name>/')
 def department_details(department_name):
-    positions = Department.query.filter_by(name=department_name).first().positions
-    vacancies = []
-    employees = []
-    for position in positions:
-        vacancies += position.vacancies
-        employees += position.employees
+    vacancies = Employee.query.filter_by(name=department_name).first().vacancies
+    employees = Vacancy.query.filter_by(name=department_name).first().employees
 
     return render_template('department.html', department_name=department_name,
-                           positions=positions, vacancies=vacancies, employees=employees)
+                           vacancies=vacancies, employees=employees)
+
+
+@app.route('/create_department/', methods=['POST'])
+def create_department():
+    try:
+        department = Department(name=request.form.get('name'), description=request.form.get('description'))
+        db.session.add(department)
+        db.session.commit()
+    except IntegrityError:
+        flash('Department already exists')
+
+    return redirect(url_for('index'))
 
 
 @app.route('/delete_department/<department_name>/', methods=['POST'])
@@ -111,56 +118,27 @@ def delete_department(department_name):
     return redirect(url_for('index'))
 
 
-@app.route('/create_department/', methods=['POST'])
-def create_department():
-    name = request.form.get('name')
-    description = request.form.get('description')
-
-    if not name or not description:
-        return redirect('index')
-
+@app.route('/create_position/', methods=['POST'])
+def create_position():
     try:
-        department = Department(name=request.form.get('name'), description=request.form.get('description'))
-        db.session.add(department)
+        position = Position(name=request.form.get('name'), description=request.form.get('description'))
+        db.session.add(position)
         db.session.commit()
     except IntegrityError:
-        flash('Name already exists')
-        return redirect(url_for('index'))
+        flash('Position already exists')
+
     return redirect(url_for('index'))
 
 
-@app.route('/create_position/', methods=['POST'])
-def create_position():
-    name = request.form.get('name')
-    description = request.form.get('description')
-    department_name = request.form.get('department_name')
-
-    if not name or not description or not department_name:
-        flash('Error creating position')
-        return redirect('index')
-    else:
-        dept = Department.query.filter_by(name=department_name).first()
-        position = Position(name=name, description=description, department_id=dept.id)
-        db.session.add(position)
-        db.session.commit()
-        return redirect('/department/{}/'.format(department_name))
-
-
-@app.route('/delete_position/', methods=['POST'])
-def delete_position():
-    position_id = request.form.get('position_id')
-    department_name = request.form.get('department_name')
-    position = Position.query.filter_by(id=position_id).first()
-    if not position_id or not department_name or not position:
-        flash('Error deleting position')
-        return redirect('index')
-    else:
+@app.route('/delete_position/<position_name>/', methods=['POST'])
+def delete_position(position_name):
+    try:
+        position = Position.query.filter_by(name=position_name).first()
         db.session.delete(position)
         db.session.commit()
-        return redirect('/department/{}/'.format(department_name))
-
-
-
+    except UnmappedInstanceError:
+        flash('Object not found')
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':

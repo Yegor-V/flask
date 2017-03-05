@@ -9,7 +9,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-xs-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
+            <div class="col-xs-6 col-md-5 col-md-offset-1 col-lg-4 col-lg-offset-2">
                 <h3>Departments:</h3>
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}
@@ -24,7 +24,7 @@
                     {% for dept in depts %}
 
                         <form method="post" action="/delete_department/{{ dept.name }}/">
-                        <a href="/department/{{ dept.name }}/">{{ dept.name }}</a> {{ dept.description }}
+                            <a href="/department/{{ dept.name }}/">{{ dept.name }}</a> {{ dept.description }}
                             <button type="submit">Delete</button>
                         </form>
 
@@ -34,29 +34,75 @@
                     <p>No departments yet. Try adding one!</p>
                 {% endif %}
                 <div id="create-button">
-                    <button onclick="getForm()">Create new department</button>
+                    <button onclick="getDeptForm()">Create new department</button>
                     {{ error_message }}
                 </div>
                 <div id="create-department"></div>
 
-                <script>
-                    function getForm() {
-                        var create_dept_form = '<form method="POST" action="create_department/">\
-                                                    <label for="name">Name</label>\
-                                                    <input id="name" name="name" type="text">\
-                                                    <label for="description">Description</label>\
-                                                    <input id="description" name="description" type="text">\
-                                                    <button type="submit">Add New Department</button>\
-                                                </form>';
+            </div>
 
-                        var form_div = document.getElementById("create-department");
-                        form_div.innerHTML = create_dept_form;
-                        var create_button = document.getElementById("create-button");
-                        create_button.innerHTML = '';
-                    }
-                </script>
+            <div class="col-xs-6 col-md-5 col-lg-4">
+                <h3>Positions:</h3>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul class=flashes>
+                            {% for message in messages %}
+                                <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                {% if positions %}
+                    {% for position in positions %}
+                        <form method="post" action="/delete_position/{{ position.name }}/">
+                            <a href="/department/{{ position.name }}/">{{ position.name }}</a>
+                            - {{ position.description }}
+                            <button type="submit">Delete</button>
+                        </form>
+                        <br>
+                    {% endfor %}
+                {% else %}
+                    <p>No positions yet. Try adding one!</p>
+                {% endif %}
+                <div id="create-position-button">
+                    <button onclick="getPosForm()">Create position</button>
+                    {{ error_message }}
+                </div>
+                <div id="create-position-form-location"></div>
 
             </div>
+
         </div>
     </div>
+
+    <script>
+        function getDeptForm() {
+            var create_dept_form = '<form method="POST" action="create_department/">\
+                                        <label for="name">Name</label>\
+                                        <input id="name" name="name" type="text">\
+                                        <label for="description">Description</label>\
+                                        <input id="description" name="description" type="text">\
+                                        <button type="submit">Add New Department</button>\
+                                    </form>';
+
+            var form_div = document.getElementById("create-department");
+            form_div.innerHTML = create_dept_form;
+            var create_button = document.getElementById("create-button");
+            create_button.innerHTML = '';
+        }
+        function getPosForm() {
+            var create_dept_form = '<form method="POST" action="create_position/">\
+                                        <label for="name">Name</label>\
+                                        <input id="name" name="name" type="text">\
+                                        <label for="description">Description</label>\
+                                        <input id="description" name="description" type="text">\
+                                        <button type="submit">Add Position</button>\
+                                    </form>';
+
+            var form_div = document.getElementById("create-position-form-location");
+            form_div.innerHTML = create_dept_form;
+            var create_button = document.getElementById("create-position-button");
+            create_button.innerHTML = '';
+        }
+    </script>
 {% endblock %}
