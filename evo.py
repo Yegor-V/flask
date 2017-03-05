@@ -1,11 +1,13 @@
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Resource, Api
+from flask_restful import Api
 import time
+from sqlalchemy.exc import IntegrityError
 
-from credentials import POSTGRES_CREDENTIALS
+from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
 
 app = Flask(__name__)
+app.secret_key = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_CREDENTIALS
 db = SQLAlchemy(app)
 api = Api(app)
@@ -31,8 +33,8 @@ class Position(db.Model):
     name = db.Column(db.String(80))
     description = db.Column(db.Text)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
-    vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic')
-    employees = db.relationship('Employee', backref='position', lazy='dynamic')
+    vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic', cascade='delete')
+    employees = db.relationship('Employee', backref='position', lazy='dynamic', cascade='delete')
 
     def __init__(self, name, description, department_id):
         self.name = name
@@ -88,7 +90,7 @@ def index():
     return render_template('index.html', depts=all_departments)
 
 
-@app.route('/department/<department_name>')
+@app.route('/department/<department_name>/')
 def department_details(department_name):
     positions = Department.query.filter_by(name=department_name).first().positions
     vacancies = []
@@ -101,122 +103,65 @@ def department_details(department_name):
                            positions=positions, vacancies=vacancies, employees=employees)
 
 
-# REST VIEWS
-class DeleteDepartment(Resource):
-    def post(self, department_name):
-        department = Department.query.filter_by(name=department_name).first()
-        if department:
-            db.session.delete(department)
-            db.session.commit()
-            return {'success': 'department deleted'}
-        else:
-            return {'error': 'department NOT found'}, 404
+@app.route('/delete_department/<department_name>/', methods=['POST'])
+def delete_department(department_name):
+    department = Department.query.filter_by(name=department_name).first()
+    db.session.delete(department)
+    db.session.commit()
+    return redirect(url_for('index'))
 
 
-class CreateDepartment(Resource):
-    def post(self):
-        department_name = request.form.get('name')
-        department_description = request.form.get('description')
+@app.route('/create_department/', methods=['POST'])
+def create_department():
+    name = request.form.get('name')
+    description = request.form.get('description')
 
-        if department_name is None:
-            return {'error': 'department name is required'}, 400
-        else:
-            department = Department(name=department_name, description=department_description)
-            db.session.add(department)
-            db.session.commit()
-            return {'success': 'department successfully created'}
+    if not name or not description:
+        return redirect('index')
 
-
-class EditDepartment(Resource):
-    def post(self):
-        department_old_name = request.form.get('old_name')
-        department_new_name = request.form.get('new_name')
-        department_description = request.form.get('description')
-
-        department = Department.query.filter_by(name=department_old_name).first()
-        if department is None:
-            return {'error': 'department not found'}, 404
-        else:
-            department.name = department_new_name
-            department.description = department_description
-            db.session.commit()
-            return {'success': 'department data successfully updated'}
+    try:
+        department = Department(name=request.form.get('name'), description=request.form.get('description'))
+        db.session.add(department)
+        db.session.commit()
+    except IntegrityError:
+        flash('Name already exists')
+        return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 
-class CreatePosition(Resource):
-    def post(self):
-        position_name = request.form.get('position_name')
-        position_description = request.form.get('position_description')
-        department_name = request.form.get('department_name')
+@app.route('/create_position/', methods=['POST'])
+def create_position():
+    name = request.form.get('name')
+    description = request.form.get('description')
+    department_name = request.form.get('department_name')
 
-        department = Department.query.filter_by(name=department_name).first()
-        if department is None:
-            return {'error': 'department not found'}, 404
-        else:
-            position = Position(name=position_name, description=position_description, department_id=department.id)
-            db.session.add(position)
-            db.session.commit()
-            return {'success': 'position created'}
-
-
-class CreateVacancy(Resource):
-    def post(self):
-        position_id = request.form.get('position_id')
-        print(position_id)
-        print(type(position_id))
-        position = Position.query.filter_by(id=position_id).first()
-        if position is None:
-            return {'error': 'position not found'}, 404
-        else:
-            vacancy = Vacancy(position_id=position_id)
-            db.session.add(vacancy)
-            db.session.commit()
-            return {'success': 'vacancy created'}
+    if not name or not description or not department_name:
+        flash('Error creating position')
+        return redirect('index')
+    else:
+        dept = Department.query.filter_by(name=department_name).first()
+        position = Position(name=name, description=description, department_id=dept.id)
+        db.session.add(position)
+        db.session.commit()
+        return redirect('/department/{}/'.format(department_name))
 
 
-class EmployeeView(Resource):
-    def get(self):
-        """
-            Get info about employee
-        """
-        employee_id = request.args.get('employee_id')
-        if not employee_id:
-            return {'error': 'employee_id needed'}, 400
-        else:
-            employee = Employee.query.filter_by(id=employee_id).first()
-            if employee is None:
-                return {'error': 'employee not found'}, 404
-            employee_department = employee.position.department.name
-            print(employee_department)
-            return render_template('employee.html', employee=employee, employee_department=employee_department)
-
-    def post(self):
-        """
-            Hire new employee
-        """
-        name = request.form.get('name')
-        surname = request.form.get('surname')
-        vacancy_id = request.form.get('vacancy_id')
-
-        vacancy = Vacancy.query.filter_by(id=vacancy_id).first()
-        if vacancy is None:
-            return {'error': 'vacancy not found or name or surname not specified'}, 400
-        else:
-            new_employee = Employee(name=name, surname=surname, position_id=vacancy.position.id)
-            db.session.add(new_employee)
-            db.session.delete(vacancy)
-            db.session.commit()
-            return {'success': 'hired!'}
+@app.route('/delete_position/', methods=['POST'])
+def delete_position():
+    position_id = request.form.get('position_id')
+    department_name = request.form.get('department_name')
+    position = Position.query.filter_by(id=position_id).first()
+    if not position_id or not department_name or not position:
+        flash('Error deleting position')
+        return redirect('index')
+    else:
+        db.session.delete(position)
+        db.session.commit()
+        return redirect('/department/{}/'.format(department_name))
 
 
-api.add_resource(DeleteDepartment, '/delete_department/<department_name>')
-api.add_resource(CreateDepartment, '/create_department')
-api.add_resource(EditDepartment, '/edit_department')
 
-api.add_resource(CreatePosition, '/create_position')
-api.add_resource(CreateVacancy, '/create_vacancy')
 
-api.add_resource(EmployeeView, '/employee/')
 
 if __name__ == '__main__':
     app.run(debug=True)

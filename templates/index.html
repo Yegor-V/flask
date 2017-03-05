@@ -1,19 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Evo</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Company{% endblock %}
 
-    <h1>RANDOM.COMPANY</h1>
-    <h3>Departments:</h3>
-    {% for dept in depts %}
-        <a href="/department/{{ dept.name }}">{{ dept.name }}</a> {{ dept.description }}
-        <button>Delete</button><small>this will delete all positions vacancies and employees</small>
-        <br>
-    {% endfor %}
-    <button>Add New Department</button>
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+                <h1>RANDOM.COMPANY</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
+                <h3>Departments:</h3>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul class=flashes>
+                            {% for message in messages %}
+                                <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                {% if depts %}
+                    {% for dept in depts %}
 
-</body>
-</html>
+                        <form method="post" action="/delete_department/{{ dept.name }}/">
+                        <a href="/department/{{ dept.name }}/">{{ dept.name }}</a> {{ dept.description }}
+                            <button type="submit">Delete</button>
+                        </form>
+
+                        <br>
+                    {% endfor %}
+                {% else %}
+                    <p>No departments yet. Try adding one!</p>
+                {% endif %}
+                <div id="create-button">
+                    <button onclick="getForm()">Create new department</button>
+                    {{ error_message }}
+                </div>
+                <div id="create-department"></div>
+
+                <script>
+                    function getForm() {
+                        var create_dept_form = '<form method="POST" action="create_department/">\
+                                                    <label for="name">Name</label>\
+                                                    <input id="name" name="name" type="text">\
+                                                    <label for="description">Description</label>\
+                                                    <input id="description" name="description" type="text">\
+                                                    <button type="submit">Add New Department</button>\
+                                                </form>';
+
+                        var form_div = document.getElementById("create-department");
+                        form_div.innerHTML = create_dept_form;
+                        var create_button = document.getElementById("create-button");
+                        create_button.innerHTML = '';
+                    }
+                </script>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

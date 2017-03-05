@@ -1,43 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ department_name }}</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}{{ department_name }}{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
+                <h2>Department {{ department_name }}
+                    <small>(leader: )</small>
+                </h2>
 
-    <h2>Department {{ department_name }} <small>(leader: )</small></h2>
+                <a href="/">Home</a>/{{ department_name }}
 
-    <a href="/">Home</a>
+                <h4>Positions:</h4>
+                {% for position in positions %}
+                    <form method="post" action="/delete_position/">
+                        {{ position.name }} - {{ position.description }}
+                        <input type="hidden" id="department_name" name="department_name" value="{{ department_name }}">
+                        <input type="hidden" id="position_id" name="position_id" value="{{ position.id }}">
+                        <button type="submit">Delete Position</button>
+                    </form>
+                    <br>
+                {% endfor %}
+                <div id="create-position"></div>
+                <div id="create-button">
+                <button onclick="showPositionForm()">Create new Position</button>
+                </div>
 
-    <h4>Positions:</h4>
-    {% for position in positions %}
-        {{ position.name }} - {{ position.description }}
-        <button>Delete Position</button>
-        <small>
-            this will delete position all vacancies for this position and fire all employees from position
-        </small>
-        <br>
-    {% endfor %}
-    <button>Create new Position</button>
+                <h4>Vacancies:</h4>
+                {% for vacancy in vacancies %}
+                    {{ vacancy }}
+                    <button>Delete vacancy</button>
+                    <button>Hire New Employee</button>
+                    <br>
+                {% endfor %}
+                <button>Create new Vacancy</button>
 
-    <h4>Vacancies:</h4>
-    {% for vacancy in vacancies %}
-        {{ vacancy }} <button>Delete vacancy</button>
-        <button>Hire New Employee</button>
-        <br>
-    {% endfor %}
-    <button>Create new Vacancy</button>
+                <h4>Employees:</h4>
+                {% for employee in employees %}
+                    {{ employee }}
+                    <button>Fire</button>
+                    <button>Change Position</button>
+                    <button>Make Department Leader</button>
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 
-    <h4>Employees:</h4>
-    {% for employee in employees %}
-        {{ employee }}
-        <button>Fire</button>
-        <button>Change Position</button>
-        <button>Make Department Leader</button>
-        <br>
-    {% endfor %}
-    <button>Hire new employee</button>
+    <script>
+        function showPositionForm() {
+            var form = '\
+            <form method="POST" action="/create_position/">\
+                <label for="name">Name</label>\
+                <input id="name" name="name" type="text">\
+                <label for="description">Description</label>\
+                <input id="description" name="description" type="text">\
+                <input type="hidden" id="department_name" name="department_name" value="{{ department_name }}">\
+                <button type="submit">Add New Position</button>\
+            </form>';
 
-</body>
-</html>
+            var form_div = document.getElementById("create-position");
+            form_div.innerHTML = form;
+            var create_button = document.getElementById("create-button");
+            create_button.innerHTML = '';
+        }
+    </script>
+
+{% endblock %}
