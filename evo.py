@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
+from utils import to_timestamp
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -33,6 +34,7 @@ class Position(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
+    vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic', cascade='delete')
 
     def __init__(self, name, description):
         self.name = name
@@ -91,11 +93,12 @@ def index():
 
 @app.route('/department/<department_name>/')
 def department_details(department_name):
-    vacancies = Employee.query.filter_by(name=department_name).first().vacancies
-    employees = Vacancy.query.filter_by(name=department_name).first().employees
-
+    dept = Department.query.filter_by(name=department_name).first()
+    vacancies = list(dept.vacancies)
+    employees = list(dept.employees)
+    positions = list(Position.query.all())
     return render_template('department.html', department_name=department_name,
-                           vacancies=vacancies, employees=employees)
+                           vacancies=vacancies, employees=employees, positions=positions)
 
 
 @app.route('/create_department/', methods=['POST'])
@@ -139,6 +142,27 @@ def delete_position(position_name):
     except UnmappedInstanceError:
         flash('Object not found')
     return redirect(url_for('index'))
+
+
+@app.route('/create_vacancy/', methods=['POST'])
+def create_vacancy():
+    position = Position.query.filter_by(name=request.form.get('vacancy_position_name')).first()
+    department = Department.query.filter_by(name=request.form.get('department_name')).first()
+
+    vacancy = Vacancy(position_id=position.id, department_id=department.id,
+                      date_opened=to_timestamp(request.form.get('vacancy_date')))
+    db.session.add(vacancy)
+    db.session.commit()
+
+    return redirect('/department/{}/'.format(department.name))
+
+
+@app.route('/delete_vacancy/', methods=['POST'])
+def delete_vacancy():
+    vacancy = Vacancy.query.filter_by(id=request.form.get('vacancy_id')).first()
+    db.session.delete(vacancy)
+    db.session.commit()
+    return redirect('/department/{}/'.format(request.form.get('department_name')))
 
 
 if __name__ == '__main__':

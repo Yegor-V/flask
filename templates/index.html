@@ -55,8 +55,7 @@
                 {% if positions %}
                     {% for position in positions %}
                         <form method="post" action="/delete_position/{{ position.name }}/">
-                            <a href="/department/{{ position.name }}/">{{ position.name }}</a>
-                            - {{ position.description }}
+                            {{ position.name }} - {{ position.description }}
                             <button type="submit">Delete</button>
                         </form>
                         <br>
@@ -78,10 +77,10 @@
     <script>
         function getDeptForm() {
             var create_dept_form = '<form method="POST" action="create_department/">\
-                                        <label for="name">Name</label>\
-                                        <input id="name" name="name" type="text">\
-                                        <label for="description">Description</label>\
-                                        <input id="description" name="description" type="text">\
+                                        <label for="dept-name">Name</label>\
+                                        <input id="dept-name" name="name" type="text">\
+                                        <label for="dept-description">Description</label>\
+                                        <input id="dept-description" name="description" type="text">\
                                         <button type="submit">Add New Department</button>\
                                     </form>';
 
@@ -92,10 +91,10 @@
         }
         function getPosForm() {
             var create_dept_form = '<form method="POST" action="create_position/">\
-                                        <label for="name">Name</label>\
-                                        <input id="name" name="name" type="text">\
-                                        <label for="description">Description</label>\
-                                        <input id="description" name="description" type="text">\
+                                        <label for="position-name">Name</label>\
+                                        <input id="position-name" name="name" type="text">\
+                                        <label for="position-description">Description</label>\
+                                        <input id="position-description" name="description" type="text">\
                                         <button type="submit">Add Position</button>\
                                     </form>';
 

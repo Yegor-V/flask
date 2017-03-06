@@ -3,66 +3,121 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-xs-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
-                <h2>Department {{ department_name }}
-                    <small>(leader: )</small>
-                </h2>
-
+            <div class="col-lg-4 col-lg-offset-4">
+                <h2>Department {{ department_name }}</h2>
+                (leader: )
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-2 col-lg-offset-2">
                 <a href="/">Home</a>/{{ department_name }}
-
-                <h4>Positions:</h4>
-                {% for position in positions %}
-                    <form method="post" action="/delete_position/">
-                        {{ position.name }} - {{ position.description }}
-                        <input type="hidden" id="department_name" name="department_name" value="{{ department_name }}">
-                        <input type="hidden" id="position_id" name="position_id" value="{{ position.id }}">
-                        <button type="submit">Delete Position</button>
-                    </form>
-                    <br>
-                {% endfor %}
-                <div id="create-position"></div>
-                <div id="create-button">
-                <button onclick="showPositionForm()">Create new Position</button>
-                </div>
-
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-5 col-md-offset-1 col-lg-4 col-lg-offset-2">
                 <h4>Vacancies:</h4>
-                {% for vacancy in vacancies %}
-                    {{ vacancy }}
-                    <button>Delete vacancy</button>
-                    <button>Hire New Employee</button>
-                    <br>
-                {% endfor %}
-                <button>Create new Vacancy</button>
+                {% if vacancies %}
+                    {% for vacancy in vacancies %}
+                        {{ vacancy }}
+                        <form method="post" action="/delete_vacancy/">
+                        <input type="hidden" value="{{ department_name }}" name="department_name">
+                        <input type="hidden" value="{{ vacancy.id }}" name="vacancy_id">
+                        <button type="submit">Delete vacancy</button>
+                        </form>
+                        <div id="hire-form"></div>
+                        <button onclick="getHireForm()">Hire New Employee</button>
+                        <br>
+                        <br>
+                    {% endfor %}
+                {% else %}
+                    <p>No open positions here...</p>
+                {% endif %}
+                <!--
+                <div id="create-new-vacancy-button">
+                    <button onclick="getCreateVacancyForm()">Create new Vacancy</button>
+                </div>
+                -->
+                <div id="create-new-vacancy-form">
 
+                    <form method="POST" action="/create_vacancy/">
+                        <input type="hidden" value="{{ department_name }}" name="department_name">
+                        <label for="vacancy-position">Position:</label>
+                        <select id="vacancy-position" name="vacancy_position_name">
+                            {% for position in positions %}
+                                <option value="{{ position.name }}">{{ position.name }}</option>
+                            {% endfor %}
+                        </select><br>
+                        <label for="vacancy-date">Date:</label>
+                        <input id="vacancy-date" name="vacancy_date" type="text"><br>
+                        <button type="submit">Add Vacancy</button>
+                    </form>
+
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-5 col-lg-4">
                 <h4>Employees:</h4>
-                {% for employee in employees %}
-                    {{ employee }}
-                    <button>Fire</button>
-                    <button>Change Position</button>
-                    <button>Make Department Leader</button>
-                    <br>
-                {% endfor %}
+                {% if employees %}
+                    {% for employee in employees %}
+                        {{ employee }}
+                        <button>Fire</button>
+                        <button>Change Position</button>
+                        <button>Make Department Leader</button>
+                        <br>
+                    {% endfor %}
+                {% else %}
+                    <p>No one works here...</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
+    <!-- For some reason loaded by js form does not "see" jquery datepicker scripts -->
     <script>
-        function showPositionForm() {
-            var form = '\
-            <form method="POST" action="/create_position/">\
-                <label for="name">Name</label>\
-                <input id="name" name="name" type="text">\
-                <label for="description">Description</label>\
-                <input id="description" name="description" type="text">\
-                <input type="hidden" id="department_name" name="department_name" value="{{ department_name }}">\
-                <button type="submit">Add New Position</button>\
-            </form>';
+        function getCreateVacancyForm() {
+            var create_form = '<form method="POST" action="/create_vacancy/">\
+                                    <label for="vacancy-position">Position:</label>\
+                                    <select>\
+                                        {% for position in positions %}\
+                                        <option value="{{ position.name }}">{{ position.name }}</option>\
+                                        {% endfor %}\
+                                    </select><br>\
+                                    <label for="vacancy-date">Date:</label>\
+                                    <input id="vacancy-date" name="vacancy_date" type="text"><br>\
+                                    <button type="submit">Add Position</button>\
+                                </form>';
 
-            var form_div = document.getElementById("create-position");
-            form_div.innerHTML = form;
-            var create_button = document.getElementById("create-button");
+            var form_div = document.getElementById("create-new-vacancy-form");
+            form_div.innerHTML = create_form;
+            var create_button = document.getElementById("create-new-vacancy-button");
             create_button.innerHTML = '';
         }
     </script>
 
+    <script>
+        function getHireForm() {
+            var create_form = '<form method="POST" action="/hire/">\
+                                    <label for="emp-name">Position:</label>\
+                                    <input>\
+                                    <label for="vacancy-date">Date:</label>\
+                                    <input id="vacancy-date" name="vacancy_date" type="text"><br>\
+                                    <button type="submit">Add Position</button>\
+                                </form>';
+
+            var form_div = document.getElementById("create-new-vacancy-form");
+            form_div.innerHTML = create_form;
+            var create_button = document.getElementById("create-new-vacancy-button");
+            create_button.innerHTML = '';
+        }
+    </script>
+
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="/resources/demos/style.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        $(function () {
+            $("#vacancy-date").datepicker();
+        });
+    </script>
 {% endblock %}
