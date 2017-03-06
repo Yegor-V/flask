@@ -83,6 +83,8 @@ class Employee(db.Model):
     def __repr__(self):
         return 'Employee {} {}'.format(self.name, self.surname)
 
+# Gonna replace all jinja to js. Yes, i will!
+
 
 @app.route('/')
 def index():
