@@ -168,18 +168,51 @@ class DepartmentApi(Resource):
     @staticmethod
     def patch():
         """
-        Updates department name/description.
+        Updates department name/description. department_id is needed.
         :return: success/error json
         """
-        raise NotImplementedError
+        department_id = request.form.get('department_id')
+        new_name = request.form.get('new_name')
+        new_description = request.form.get('new_description')
+        if not department_id:
+            return {'error': 'department_id is required'}, 400
+        elif not new_name and not new_description:
+            return {'error': 'at least one of new_name and new_description needed'}, 400
+        else:
+            try:
+                department = Department.query.filter_by(id=department_id).first()
+                if not department:
+                    return {'error': 'department with specified id not found'}, 404
+                if new_name:
+                    department.name = new_name
+                if new_description:
+                    department.description = new_description
+                db.session.commit()
+                return {'success': 'department updated successfully'}
+
+            except DataError:
+                return {'error': 'department_id must be string'}, 400
 
     @staticmethod
     def delete():
         """
-        Deletes department.
+        Deletes department. department_id is needed.
         :return: success/error json
         """
-        raise NotImplementedError
+        department_id = request.form.get('department_id')
+        if not department_id:
+            return {'error': 'department_id is required'}, 400
+        else:
+            try:
+                department = Department.query.filter_by(id=department_id).first()
+                if not department:
+                    return {'error': 'department with specified id not found'}, 404
+                else:
+                    db.session.delete(department)
+                    db.session.commit()
+                    return {'success': 'department deleted'}
+            except DataError:
+                return {'error': 'department_id must be string'}, 400
 
 
 class PositionApi(Resource):
