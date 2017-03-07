@@ -1,12 +1,10 @@
-from flask import Flask, redirect, render_template, request, url_for, flash
+from flask import Flask, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Api
+from flask_restful import Api, Resource
 import time
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
-from utils import to_timestamp
+from utils import get_object_dict
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -83,88 +81,43 @@ class Employee(db.Model):
     def __repr__(self):
         return 'Employee {} {}'.format(self.name, self.surname)
 
-# Gonna replace all jinja to js. Yes, i will!
-
 
 @app.route('/')
-def index():
-    all_departments = Department.query.all()
-    all_positions = Position.query.all()
-    return render_template('index.html', depts=all_departments, positions=all_positions)
+def company():
+    return render_template('company.html')
 
 
-@app.route('/department/<department_name>/')
-def department_details(department_name):
-    dept = Department.query.filter_by(name=department_name).first()
-    vacancies = list(dept.vacancies)
-    employees = list(dept.employees)
-    positions = list(Position.query.all())
-    return render_template('department.html', department_name=department_name,
-                           vacancies=vacancies, employees=employees, positions=positions)
+@app.route('/department/<department_name>')
+def department(department_name):
+    return render_template('department.html', department_name=department_name)
 
 
-@app.route('/create_department/', methods=['POST'])
-def create_department():
-    try:
-        department = Department(name=request.form.get('name'), description=request.form.get('description'))
-        db.session.add(department)
-        db.session.commit()
-    except IntegrityError:
-        flash('Department already exists')
-
-    return redirect(url_for('index'))
+@app.route('/employee/<employee_id>')
+def employee(employee_id):
+    return render_template('employee.html', employee_id=employee_id)
 
 
-@app.route('/delete_department/<department_name>/', methods=['POST'])
-def delete_department(department_name):
-    department = Department.query.filter_by(name=department_name).first()
-    db.session.delete(department)
-    db.session.commit()
-    return redirect(url_for('index'))
+class CompanyApi(Resource):
+    def get(self):
+        """
+        :return: All data for company template: all departments and all positions info
+        """
+        departments = [get_object_dict(d) for d in Department.query.all()]
+        positions = [get_object_dict(p) for p in Position.query.all()]
+        return jsonify({'company_name': 'Evo', 'departments': departments, 'positions': positions})
 
 
-@app.route('/create_position/', methods=['POST'])
-def create_position():
-    try:
-        position = Position(name=request.form.get('name'), description=request.form.get('description'))
-        db.session.add(position)
-        db.session.commit()
-    except IntegrityError:
-        flash('Position already exists')
-
-    return redirect(url_for('index'))
+class DepartmentApi(Resource):
+    pass
 
 
-@app.route('/delete_position/<position_name>/', methods=['POST'])
-def delete_position(position_name):
-    try:
-        position = Position.query.filter_by(name=position_name).first()
-        db.session.delete(position)
-        db.session.commit()
-    except UnmappedInstanceError:
-        flash('Object not found')
-    return redirect(url_for('index'))
+class EmployeeApi(Resource):
+    pass
 
 
-@app.route('/create_vacancy/', methods=['POST'])
-def create_vacancy():
-    position = Position.query.filter_by(name=request.form.get('vacancy_position_name')).first()
-    department = Department.query.filter_by(name=request.form.get('department_name')).first()
-
-    vacancy = Vacancy(position_id=position.id, department_id=department.id,
-                      date_opened=to_timestamp(request.form.get('vacancy_date')))
-    db.session.add(vacancy)
-    db.session.commit()
-
-    return redirect('/department/{}/'.format(department.name))
-
-
-@app.route('/delete_vacancy/', methods=['POST'])
-def delete_vacancy():
-    vacancy = Vacancy.query.filter_by(id=request.form.get('vacancy_id')).first()
-    db.session.delete(vacancy)
-    db.session.commit()
-    return redirect('/department/{}/'.format(request.form.get('department_name')))
+api.add_resource(CompanyApi, '/api/company/')
+api.add_resource(DepartmentApi, '/api/department/')
+api.add_resource(EmployeeApi, '/api/employee/')
 
 
 if __name__ == '__main__':

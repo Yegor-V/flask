@@ -2,3 +2,4 @@
 .idea/
 __pycache__/
 credentials.py
+static/js/jquery-3.1.1.js
