@@ -12,6 +12,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_CREDENTIALS
 db = SQLAlchemy(app)
 api = Api(app)
 
+COMPANY_NAME = 'RANDOM'
+
 
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -104,19 +106,134 @@ class CompanyApi(Resource):
         """
         departments = [get_object_dict(d) for d in Department.query.all()]
         positions = [get_object_dict(p) for p in Position.query.all()]
-        return jsonify({'company_name': 'Evo', 'departments': departments, 'positions': positions})
+        return jsonify({'company_name': COMPANY_NAME, 'departments': departments, 'positions': positions})
 
 
 class DepartmentApi(Resource):
-    pass
+    def get(self):
+        """
+        :return: All departments json (needed on company page when adding/deleting/editing department)
+        """
+        raise NotImplementedError
+
+    def post(self):
+        """
+        Saves new department to db. name and description are needed. Name is unique.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def patch(self):
+        """
+        Updates department name/description.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def delete(self):
+        """
+        Deletes department.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+
+class PositionApi(Resource):
+    def get(self):
+        """
+        :return: All positions json (needed on company page when adding/deleting/editing position)
+        """
+        raise NotImplementedError
+
+    def post(self):
+        """
+        Saves new position to db. name and description are needed. Name is unique.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def patch(self):
+        """
+        Updates position name/description.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def delete(self):
+        """
+        Deletes position.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+
+class VacancyApi(Resource):
+    def get(self):
+        """
+        :return: All vacancies json of current department. department name is needed in request.
+        """
+        raise NotImplementedError
+
+    def post(self):
+        """
+        Opens vacancy in current department. department_id and position_id are needed.
+        date_opened is optional (defaults to now)
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def patch(self):
+        """
+        Updates vacancy data.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def delete(self):
+        """
+        Deletes (closes) vacancy.
+        :return: success/error json
+        """
+        raise NotImplementedError
 
 
 class EmployeeApi(Resource):
-    pass
+    def get(self):
+        """
+        :return: All employees of current department json. Needs department_name parameter.
+        """
+        raise NotImplementedError
+
+    def post(self):
+        """
+        Creates new db instance of Employee. position_id, department_id, name and surname args are needed.
+        Other info (email, phone, birth_date, start_work_date and is_department_leader) is optional.
+        If start_work_date is not set -> will be set to now.
+        If is_department_leader is not set -> will be set to False.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def patch(self):
+        """
+        Updates employee's personal info.
+        Just gets all updated info from request data and updates table row.
+        :return: success/error json
+        """
+        raise NotImplementedError
+
+    def delete(self):
+        """
+        Deletes employee. Needs employee_id in request. ("FIRE" button)
+        :return: success/error json
+        """
+        raise NotImplementedError
 
 
 api.add_resource(CompanyApi, '/api/company/')
 api.add_resource(DepartmentApi, '/api/department/')
+api.add_resource(PositionApi, '/api/position/')
+api.add_resource(VacancyApi, '/api/vacancy/')
 api.add_resource(EmployeeApi, '/api/employee/')
 
 
