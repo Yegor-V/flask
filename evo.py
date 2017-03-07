@@ -1,10 +1,11 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
 import time
 
+from sqlalchemy.exc import DataError, IntegrityError
+
 from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
-from utils import get_object_dict
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -13,11 +14,26 @@ db = SQLAlchemy(app)
 api = Api(app)
 
 COMPANY_NAME = 'RANDOM'
+DATABASE_STRING_LENGTH = 50
+
+
+def get_object_dict(table_row_object):
+    table_row_dict = table_row_object.__dict__
+    del table_row_dict['_sa_instance_state']
+    return table_row_dict
+
+
+def get_all_positions():
+    return [get_object_dict(p) for p in Position.query.all()]
+
+
+def get_all_departments():
+    return [get_object_dict(d) for d in Department.query.all()]
 
 
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(DATABASE_STRING_LENGTH), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     vacancies = db.relationship('Vacancy', backref='department', lazy='dynamic', cascade='delete')
     employees = db.relationship('Employee', backref='department', lazy='dynamic', cascade='delete')
@@ -32,7 +48,7 @@ class Department(db.Model):
 
 class Position(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(DATABASE_STRING_LENGTH), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic', cascade='delete')
 
@@ -63,11 +79,11 @@ class Vacancy(db.Model):
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    surname = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(50))
-    phone = db.Column(db.String(50))
-    birth_date = db.Column(db.String(50))
+    name = db.Column(db.String(DATABASE_STRING_LENGTH), nullable=False)
+    surname = db.Column(db.String(DATABASE_STRING_LENGTH), nullable=False)
+    email = db.Column(db.String(DATABASE_STRING_LENGTH))
+    phone = db.Column(db.String(DATABASE_STRING_LENGTH))
+    birth_date = db.Column(db.String(DATABASE_STRING_LENGTH))
     start_work_date = db.Column(db.BigInteger)
     position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
@@ -85,52 +101,80 @@ class Employee(db.Model):
 
 
 @app.route('/')
-def company():
+def company_view():
     return render_template('company.html')
 
 
 @app.route('/department/<department_name>')
-def department(department_name):
+def department_view(department_name):
     return render_template('department.html', department_name=department_name)
 
 
 @app.route('/employee/<employee_id>')
-def employee(employee_id):
+def employee_view(employee_id):
     return render_template('employee.html', employee_id=employee_id)
 
 
 class CompanyApi(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         """
         :return: All data for company template: all departments and all positions info
         """
-        departments = [get_object_dict(d) for d in Department.query.all()]
-        positions = [get_object_dict(p) for p in Position.query.all()]
-        return jsonify({'company_name': COMPANY_NAME, 'departments': departments, 'positions': positions})
+        departments = get_all_departments()
+        positions = get_all_positions()
+        return {'company_name': COMPANY_NAME, 'departments': departments, 'positions': positions}
 
 
 class DepartmentApi(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         """
-        :return: All departments json (needed on company page when adding/deleting/editing department)
+        :return: All departments json or particular department details if id is specified
         """
-        raise NotImplementedError
+        department_id = request.args.get('department_id')
+        if not department_id:
+            return get_all_departments()
+        else:
+            try:
+                department = Department.query.filter_by(id=department_id).first()
+                return {'error': 'department not found'}, 404 if not department else get_object_dict(department)
+            except DataError:
+                return {'error': 'department_id must be a number'}, 400
 
-    def post(self):
+    @staticmethod
+    def post():
         """
         Saves new department to db. name and description are needed. Name is unique.
         :return: success/error json
         """
-        raise NotImplementedError
+        name = request.form.get('name')
+        description = request.form.get('description')
 
-    def patch(self):
+        if not name or not description:
+            return {'error': 'name and description required'}, 400
+        elif len(name) > DATABASE_STRING_LENGTH or len(description) > DATABASE_STRING_LENGTH:
+            return {'error': 'name and description must not be longer then {} symbols'.format(
+                DATABASE_STRING_LENGTH)}, 400
+        else:
+            try:
+                department = Department(name=name, description=description)
+                db.session.add(department)
+                db.session.commit()
+                return {'success': 'department created successfully'}, 201
+            except IntegrityError:
+                return {'error': 'department with this name already exists'}, 400
+
+    @staticmethod
+    def patch():
         """
         Updates department name/description.
         :return: success/error json
         """
         raise NotImplementedError
 
-    def delete(self):
+    @staticmethod
+    def delete():
         """
         Deletes department.
         :return: success/error json
@@ -139,27 +183,31 @@ class DepartmentApi(Resource):
 
 
 class PositionApi(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         """
         :return: All positions json (needed on company page when adding/deleting/editing position)
         """
-        raise NotImplementedError
+        return get_all_positions()
 
-    def post(self):
+    @staticmethod
+    def post():
         """
         Saves new position to db. name and description are needed. Name is unique.
         :return: success/error json
         """
         raise NotImplementedError
 
-    def patch(self):
+    @staticmethod
+    def patch():
         """
         Updates position name/description.
         :return: success/error json
         """
         raise NotImplementedError
 
-    def delete(self):
+    @staticmethod
+    def delete():
         """
         Deletes position.
         :return: success/error json
@@ -168,13 +216,15 @@ class PositionApi(Resource):
 
 
 class VacancyApi(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         """
         :return: All vacancies json of current department. department name is needed in request.
         """
         raise NotImplementedError
 
-    def post(self):
+    @staticmethod
+    def post():
         """
         Opens vacancy in current department. department_id and position_id are needed.
         date_opened is optional (defaults to now)
@@ -182,14 +232,16 @@ class VacancyApi(Resource):
         """
         raise NotImplementedError
 
-    def patch(self):
+    @staticmethod
+    def patch():
         """
         Updates vacancy data.
         :return: success/error json
         """
         raise NotImplementedError
 
-    def delete(self):
+    @staticmethod
+    def delete():
         """
         Deletes (closes) vacancy.
         :return: success/error json
@@ -198,13 +250,15 @@ class VacancyApi(Resource):
 
 
 class EmployeeApi(Resource):
-    def get(self):
+    @staticmethod
+    def get():
         """
         :return: All employees of current department json. Needs department_name parameter.
         """
         raise NotImplementedError
 
-    def post(self):
+    @staticmethod
+    def post():
         """
         Creates new db instance of Employee. position_id, department_id, name and surname args are needed.
         Other info (email, phone, birth_date, start_work_date and is_department_leader) is optional.
@@ -214,7 +268,8 @@ class EmployeeApi(Resource):
         """
         raise NotImplementedError
 
-    def patch(self):
+    @staticmethod
+    def patch():
         """
         Updates employee's personal info.
         Just gets all updated info from request data and updates table row.
@@ -222,7 +277,8 @@ class EmployeeApi(Resource):
         """
         raise NotImplementedError
 
-    def delete(self):
+    @staticmethod
+    def delete():
         """
         Deletes employee. Needs employee_id in request. ("FIRE" button)
         :return: success/error json
