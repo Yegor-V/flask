@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../static/js/companyScripts.js"></script>
+    <script src="../static/js/jquery-3.1.1.js"></script>
+    <title>Company</title>
+</head>
+<body onload="getCompanyData()">
+    <div id="companyName">Company name: {{ company_name }}</div><br>
+
+
+    Departments: <div id="departments"></div>
+    <div id="add-department"><button onclick="hideButtonShowForm()">Add Department</button></div><br>
+    <div id="add-department-form" style="display: none;">
+        <label for="department-name">Name: </label>
+        <input id="department-name" name="name" type="text">
+        <label for="department-description">Description: </label>
+        <input id="department-description" name="description" type="text">
+        <button onclick="sendCreateDepartmentForm()">Add Department</button>
+    </div>
+    <div id="errors"></div>
+    <br>
+
+    Positions: <div id="positions"></div>
+
+</body>
+</html>
