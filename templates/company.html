@@ -7,8 +7,22 @@
     <title>Company</title>
 </head>
 <body onload="getCompanyData()">
-    Company name: <span id="companyName"></span><br>
-    Departments: <div id="departments"></div><br>
+    <div id="companyName">Company name: {{ company_name }}</div><br>
+
+
+    Departments: <div id="departments"></div>
+    <div id="add-department"><button onclick="hideButtonShowForm()">Add Department</button></div><br>
+    <div id="add-department-form" style="display: none;">
+        <label for="department-name">Name: </label>
+        <input id="department-name" name="name" type="text">
+        <label for="department-description">Description: </label>
+        <input id="department-description" name="description" type="text">
+        <button onclick="sendCreateDepartmentForm()">Add Department</button>
+    </div>
+    <div id="errors"></div>
+    <br>
+
     Positions: <div id="positions"></div>
+
 </body>
 </html>

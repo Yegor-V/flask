@@ -102,7 +102,7 @@ class Employee(db.Model):
 
 @app.route('/')
 def company_view():
-    return render_template('company.html')
+    return render_template('company.html', company_name=COMPANY_NAME)
 
 
 @app.route('/department/<department_name>')
@@ -113,17 +113,6 @@ def department_view(department_name):
 @app.route('/employee/<employee_id>')
 def employee_view(employee_id):
     return render_template('employee.html', employee_id=employee_id)
-
-
-class CompanyApi(Resource):
-    @staticmethod
-    def get():
-        """
-        :return: All data for company template: all departments and all positions info
-        """
-        departments = get_all_departments()
-        positions = get_all_positions()
-        return {'company_name': COMPANY_NAME, 'departments': departments, 'positions': positions}
 
 
 class DepartmentApi(Resource):
@@ -161,7 +150,8 @@ class DepartmentApi(Resource):
                 department = Department(name=name, description=description)
                 db.session.add(department)
                 db.session.commit()
-                return {'success': 'department created successfully'}, 201
+                return {'success': 'department created', 'department': {
+                    'name': department.name, 'id': department.id, 'description': department.description}}, 201
             except IntegrityError:
                 return {'error': 'department with this name already exists'}, 400
 
@@ -229,7 +219,22 @@ class PositionApi(Resource):
         Saves new position to db. name and description are needed. Name is unique.
         :return: success/error json
         """
-        raise NotImplementedError
+        name = request.form.get('name')
+        description = request.form.get('description')
+
+        if not name or not description:
+            return {'error': 'name and description required'}, 400
+        elif len(name) > DATABASE_STRING_LENGTH or len(description) > DATABASE_STRING_LENGTH:
+            return {'error': 'name and description must not be longer then {} symbols'.format(
+                DATABASE_STRING_LENGTH)}, 400
+        else:
+            try:
+                position = Position(name=name, description=description)
+                db.session.add(position)
+                db.session.commit()
+                return {'success': 'position created'}, 201
+            except IntegrityError:
+                return {'error': 'position with this name already exists'}, 400
 
     @staticmethod
     def patch():
@@ -237,7 +242,27 @@ class PositionApi(Resource):
         Updates position name/description.
         :return: success/error json
         """
-        raise NotImplementedError
+        position_id = request.form.get('position_id')
+        new_name = request.form.get('new_name')
+        new_description = request.form.get('new_description')
+        if not position_id:
+            return {'error': 'position_id is required'}, 400
+        elif not new_name and not new_description:
+            return {'error': 'at least one of new_name and new_description needed'}, 400
+        else:
+            try:
+                position = Position.query.filter_by(id=position_id).first()
+                if not position:
+                    return {'error': 'position with specified id not found'}, 404
+                if new_name:
+                    position.name = new_name
+                if new_description:
+                    position.description = new_description
+                db.session.commit()
+                return {'success': 'position updated'}
+
+            except DataError:
+                return {'error': 'position_id must be string'}, 400
 
     @staticmethod
     def delete():
@@ -245,7 +270,20 @@ class PositionApi(Resource):
         Deletes position.
         :return: success/error json
         """
-        raise NotImplementedError
+        position_id = request.form.get('position_id')
+        if not position_id:
+            return {'error': 'position_id is required'}, 400
+        else:
+            try:
+                position = Department.query.filter_by(id=position_id).first()
+                if not position:
+                    return {'error': 'position with specified id not found'}, 404
+                else:
+                    db.session.delete(position)
+                    db.session.commit()
+                    return {'success': 'position deleted'}
+            except DataError:
+                return {'error': 'position_id must be string'}, 400
 
 
 class VacancyApi(Resource):
@@ -319,7 +357,6 @@ class EmployeeApi(Resource):
         raise NotImplementedError
 
 
-api.add_resource(CompanyApi, '/api/company/')
 api.add_resource(DepartmentApi, '/api/department/')
 api.add_resource(PositionApi, '/api/position/')
 api.add_resource(VacancyApi, '/api/vacancy/')
