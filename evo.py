@@ -157,7 +157,7 @@ class ResourceCRUD(Resource):
                     db.session.commit()
                     return {'success': '{} {} deleted'.format(cls.model_name, item.id)}
             except DataError:
-                return {'error': 'id must be string'}, 400
+                return {'error': 'id must be int'}, 400
 
 
 class DepartmentApi(ResourceCRUD):
@@ -192,7 +192,7 @@ class DepartmentApi(ResourceCRUD):
 
         if not name or not description:
             return {'error': 'name and description required'}, 400
-        elif len(name) > DATABASE_STRING_LENGTH or len(description) > DATABASE_STRING_LENGTH:
+        elif len(name) > DATABASE_STRING_LENGTH:
             return {'error': 'name and description must not be longer then {} symbols'.format(
                 DATABASE_STRING_LENGTH)}, 400
         else:
@@ -218,6 +218,8 @@ class DepartmentApi(ResourceCRUD):
             return {'error': 'department_id is required'}, 400
         elif not new_name and not new_description:
             return {'error': 'at least one of new_name and new_description needed'}, 400
+        elif len(new_name) > DATABASE_STRING_LENGTH:
+            return {'error': 'new_name too long'}, 400
         else:
             try:
                 department = Department.query.filter_by(id=department_id).first()
@@ -255,9 +257,8 @@ class PositionApi(ResourceCRUD):
 
         if not name or not description:
             return {'error': 'name and description required'}, 400
-        elif len(name) > DATABASE_STRING_LENGTH or len(description) > DATABASE_STRING_LENGTH:
-            return {'error': 'name and description must not be longer then {} symbols'.format(
-                DATABASE_STRING_LENGTH)}, 400
+        elif len(name) > DATABASE_STRING_LENGTH:
+            return {'error': 'name must not be longer then {} symbols'.format(DATABASE_STRING_LENGTH)}, 400
         else:
             try:
                 position = Position(name=name, description=description)
