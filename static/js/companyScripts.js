@@ -43,7 +43,52 @@ function createSimpleHtmlDiv(dict, type) {
     var div = document.createElement('div');
     div.id = type + '-' + dict['id'];
     div.innerHTML = dict['name'] + ' ' + dict['description'];
+    var button = createDeleteButton(dict, type);
+    div.appendChild(button);
     return div
+}
+
+
+function createDeleteButton(dict, type) {
+    var button = document.createElement('button');
+    button.id = type + '-' + dict['id'] + '-delete-button';
+    button.className = 'delete-' + type + '-button';
+    button.innerHTML = 'Delete';
+    return button
+}
+
+var departmentsDiv = document.getElementById('departments');
+
+departmentsDiv.onclick = function (event) {
+    var clickedOnId = event['path'][0].id;
+    var clickedOnClass = event['path'][0].className;
+
+    if (clickedOnClass === 'delete-department-button'){
+        var department_id = clickedOnId.split('-')[1];
+        deleteItem(department_id, 'department')
+    }
+    if (clickedOnClass === 'delete-position-button'){
+        var position_id = clickedOnId.split('-')[1];
+        deleteItem(position_id, 'position')
+    }
+
+};
+
+function deleteItem(id, type) {
+    console.log('Deleting ' + type + ' '+ id);
+    $.ajax('/api/' + type + '/', {
+        type: 'DELETE',
+        data: {'id': id},
+        success: function (data) {
+            console.log(data);
+            var parent_div = document.getElementById(type + 's');
+            parent_div.removeChild(document.getElementById(type + '-' + id))
+        },
+        error: function (data) {
+            console.log(data);
+            showErrorMessage(data)
+        }
+    })
 }
 
 

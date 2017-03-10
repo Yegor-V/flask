@@ -142,7 +142,11 @@ class DepartmentApi(Resource):
         else:
             try:
                 department = Department.query.filter_by(id=department_id).first()
-                return {'error': 'department not found'}, 404 if not department else get_object_dict(department)
+                print(department)
+                if department:
+                    return get_object_dict(department)
+                else:
+                    return {'error': 'department not found'}, 404
             except DataError:
                 return {'error': 'department_id must be a number'}, 400
 
