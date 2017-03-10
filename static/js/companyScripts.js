@@ -1,14 +1,15 @@
+/**Gets all info needed for company (index) page: all departments and all positions*/
 function getCompanyData() {
     getAllDepartments();
     getAllPositions();
 }
 
-
+/**Show error message on company page*/
 function showErrorMessage(message) {
     document.getElementById('errors').innerHTML = message
 }
 
-
+/**Get all departments and put them in divs inside 'departments' parent div*/
 function getAllDepartments() {
     $.ajax('/api/department/', {
         success: function (data) {
@@ -23,7 +24,7 @@ function getAllDepartments() {
     });
 }
 
-
+/**Get all positions and put them in divs inside 'positions' parent div*/
 function getAllPositions() {
     $.ajax('/api/position/', {
         success: function (data) {
@@ -38,7 +39,7 @@ function getAllPositions() {
     });
 }
 
-
+/**Create div with department/position*/
 function createSimpleHtmlDiv(dict, type) {
     var div = document.createElement('div');
     div.id = type + '-' + dict['id'];
@@ -48,7 +49,7 @@ function createSimpleHtmlDiv(dict, type) {
     return div
 }
 
-
+/**Creates 'Delete' button (used by createSimpleHtmlDiv*/
 function createDeleteButton(dict, type) {
     var button = document.createElement('button');
     button.id = type + '-' + dict['id'] + '-delete-button';
@@ -57,8 +58,8 @@ function createDeleteButton(dict, type) {
     return button
 }
 
+/**Catch click event on departments div and if delete button is hit - delete corresponding item*/
 var departmentsDiv = document.getElementById('departments');
-
 departmentsDiv.onclick = function (event) {
     var clickedOnId = event['path'][0].id;
     var clickedOnClass = event['path'][0].className;
@@ -74,6 +75,8 @@ departmentsDiv.onclick = function (event) {
 
 };
 
+
+/**Send ajax delete-item request*/
 function deleteItem(id, type) {
     console.log('Deleting ' + type + ' '+ id);
     $.ajax('/api/' + type + '/', {
@@ -92,12 +95,14 @@ function deleteItem(id, type) {
 }
 
 
+/**Hides add-department button and shows add-department form*/
 function hideButtonShowForm() {
     document.getElementById('add-department').style.display = 'none';
     document.getElementById('add-department-form').style.display = 'block';
 }
 
 
+/**Hides add-department form and replaces with add-department button*/
 function hideFormShowButton() {
     document.getElementById('add-department').style.display = 'block';
     document.getElementById('department-name').value = '';
@@ -106,6 +111,7 @@ function hideFormShowButton() {
 }
 
 
+/**Sends ajax create-department event*/
 function sendCreateDepartmentForm() {
 
     var new_dept_name = document.getElementById('department-name').value;

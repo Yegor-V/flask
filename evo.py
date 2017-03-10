@@ -1,3 +1,4 @@
+import sys
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
@@ -14,6 +15,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_CREDENTIALS
 db = SQLAlchemy(app)
 api = Api(app)
 
+MODELS_LIST = ['Department', 'Position', 'Vacancy', 'Employee']
 COMPANY_NAME = 'RANDOM'
 DATABASE_STRING_LENGTH = 50
 
@@ -130,7 +132,37 @@ def employee_view(employee_id):
     return render_template('employee.html', employee_id=employee_id)
 
 
-class DepartmentApi(Resource):
+class ResourceCRUD(Resource):
+    model_name = None
+
+    @classmethod
+    def delete(cls):
+        """
+        Deletes item (department, position, vacancy or employee) by id.
+        :return: success/error json
+        """
+        if cls.model_name is None:
+            raise NotImplementedError
+        item_id = request.form.get('id')
+        if not item_id:
+            return {'error': 'id required'}, 400
+        else:
+            class_ = getattr(sys.modules[__name__], cls.model_name)
+            try:
+                item = class_.query.filter_by(id=item_id).first()
+                if not item:
+                    return {'error': '{} with specified id not found'.format(cls.model_name)}, 404
+                else:
+                    db.session.delete(item)
+                    db.session.commit()
+                    return {'success': '{} {} deleted'.format(cls.model_name, item.id)}
+            except DataError:
+                return {'error': 'id must be string'}, 400
+
+
+class DepartmentApi(ResourceCRUD):
+    model_name = 'Department'
+
     @staticmethod
     def get():
         """
@@ -142,7 +174,6 @@ class DepartmentApi(Resource):
         else:
             try:
                 department = Department.query.filter_by(id=department_id).first()
-                print(department)
                 if department:
                     return get_object_dict(department)
                 else:
@@ -202,33 +233,14 @@ class DepartmentApi(Resource):
             except DataError:
                 return {'error': 'department_id must be string'}, 400
 
-    @staticmethod
-    def delete():
-        """
-        Deletes department. department_id is needed.
-        :return: success/error json
-        """
-        department_id = request.form.get('id')
-        if not department_id:
-            return {'error': 'department_id is required'}, 400
-        else:
-            try:
-                department = Department.query.filter_by(id=department_id).first()
-                if not department:
-                    return {'error': 'department with specified id not found'}, 404
-                else:
-                    db.session.delete(department)
-                    db.session.commit()
-                    return {'success': 'department deleted'}
-            except DataError:
-                return {'error': 'department_id must be string'}, 400
 
+class PositionApi(ResourceCRUD):
+    model_name = 'Position'
 
-class PositionApi(Resource):
     @staticmethod
     def get():
         """
-        :return: All positions json (needed on company page when adding/deleting/editing position)
+        :return: All positions json
         """
         return get_all_positions()
 
@@ -283,29 +295,10 @@ class PositionApi(Resource):
             except DataError:
                 return {'error': 'position_id must be string'}, 400
 
-    @staticmethod
-    def delete():
-        """
-        Deletes position.
-        :return: success/error json
-        """
-        position_id = request.form.get('position_id')
-        if not position_id:
-            return {'error': 'position_id is required'}, 400
-        else:
-            try:
-                position = Department.query.filter_by(id=position_id).first()
-                if not position:
-                    return {'error': 'position with specified id not found'}, 404
-                else:
-                    db.session.delete(position)
-                    db.session.commit()
-                    return {'success': 'position deleted'}
-            except DataError:
-                return {'error': 'position_id must be string'}, 400
 
+class VacancyApi(ResourceCRUD):
+    model_name = 'Vacancy'
 
-class VacancyApi(Resource):
     @staticmethod
     def get():
         """
@@ -316,11 +309,7 @@ class VacancyApi(Resource):
             return {'error': 'department_id id required'}, 400
         else:
             try:
-                department = Department.query.filter_by(id=department_id).first()
-                if not department:
-                    return {'error': 'department with specified id not found'}, 404
-                else:
-                    return get_department_vacancies(department_id)
+                return get_department_vacancies(department_id)
             except DataError:
                 return {'error': 'department_id must be int'}, 400
 
@@ -409,29 +398,10 @@ class VacancyApi(Resource):
             except (DataError, IntegrityError):
                 return {'error': 'bad department_id, position_id, vacancy_id'}
 
-    @staticmethod
-    def delete():
-        """
-        Deletes (closes) vacancy.
-        :return: success/error json
-        """
-        vacancy_id = request.form.get('vacancy_id')
-        if not vacancy_id:
-            return {'error': 'vacancy_id is required'}, 400
-        else:
-            try:
-                vacancy = Vacancy.query.filter_by(id=vacancy_id).first()
-                if not vacancy:
-                    return {'error': 'vacancy with specified id not found'}, 404
-                else:
-                    db.session.delete(vacancy)
-                    db.session.commit()
-                    return {'success': 'vacancy deleted'}
-            except DataError:
-                return {'error': 'vacancy_id must be string'}, 400
 
+class EmployeeApi(ResourceCRUD):
+    model_name = 'Employee'
 
-class EmployeeApi(Resource):
     @staticmethod
     def get():
         """
@@ -501,29 +471,42 @@ class EmployeeApi(Resource):
         Just gets all updated info from request data and updates table row.
         :return: success/error json
         """
-        raise NotImplementedError
-
-    @staticmethod
-    def delete():
-        """
-        Deletes employee. Needs employee_id in request. ("FIRE" button)
-        :return: success/error json
-        """
         employee_id = request.form.get('employee_id')
+
+        new_name = request.form.get('employee_id')
+        new_surname = request.form.get('employee_id')
+        new_department_id = request.form.get('employee_id')
+        new_position_id = request.form.get('employee_id')
+        new_phone = request.form.get('employee_id')
+        new_email = request.form.get('employee_id')
+        new_birth_date = request.form.get('employee_id')
+        new_start_work_date = request.form.get('employee_id')
+        new_is_department_leader = request.form.get('employee_id')
+
         if not employee_id:
             return {'error': 'employee_id is required'}, 400
-        else:
-            try:
-                employee = Employee.query.filter_by(id=employee_id).first()
-                if not employee:
-                    return {'error': 'employee with specified id not found'}, 404
-                else:
-                    db.session.delete(employee)
-                    db.session.commit()
-                    return {'success': 'employee deleted'}
-            except DataError:
-                return {'error': 'employee_id must be string'}, 400
 
+        try:
+            employee = Employee.query.filter_by(id=employee_id).first()
+            if not employee:
+                return {'error': 'employee {} not found'.format(employee_id)}, 400
+            else:
+                try:
+                    employee.name = new_name if new_name else None
+                    employee.surname = new_surname if new_surname else None
+                    employee.department_id = new_department_id if new_department_id else None
+                    employee.position_id = new_position_id if new_position_id else None
+                    employee.phone = new_phone if new_phone else None
+                    employee.email = new_email if new_email else None
+                    employee.birth_date = new_birth_date if new_birth_date else None
+                    employee.start_work_date = new_start_work_date if new_start_work_date else None
+                    employee.is_department_leader = new_is_department_leader if new_is_department_leader else None
+                    db.session.add(employee)
+                    db.session.commit()
+                except Exception as e:
+                    return {'error': e}
+        except DataError:
+            return {'error': 'employee_id must be int'}, 400
 
 api.add_resource(DepartmentApi, '/api/department/')
 api.add_resource(PositionApi, '/api/position/')
