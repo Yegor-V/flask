@@ -6,24 +6,34 @@
     <title>Company</title>
 </head>
 <body onload="getCompanyData()">
-    <div id="companyName">Company name: {{ company_name }}</div><br>
+<div id="companyName">Company name: {{ company_name }}</div>
+<br>
 
 
-    Departments: <div id="departments"></div>
+Departments:
+<div id="departments"></div>
 
-    <div id="add-department"><button onclick="hideButtonShowForm()">Add Department</button></div><br>
-    <div id="add-department-form" style="display: none;">
-        <label for="department-name">Name: </label>
-        <input id="department-name" name="name" type="text">
-        <label for="department-description">Description: </label>
-        <input id="department-description" name="description" type="text">
-        <button onclick="sendCreateDepartmentForm()">Add Department</button>
-    </div>
-    <div id="errors"></div>
-    <br>
+<div id="add-department">
+    <button onclick="hideButtonShowForm()">Add Department</button>
+</div>
+<br>
+<div id="add-department-form" style="display: none;">
+    <label for="department-name">Name: </label>
+    <input id="department-name" name="name" type="text">
+    <label for="department-description">Description: </label>
+    <input id="department-description" name="description" type="text">
+    <button onclick="sendCreateDepartmentForm()">Add Department</button>
+</div>
+<div id="errors"></div>
+<br>
 
-    Positions: <div id="positions"></div>
+Positions:
+<div id="positions"></div>
+<div id="create-position">
+    <button id="create-position-button">Create Position</button>
+</div>
+<div id="position-errors"></div>
 
-    <script src="../static/js/companyScripts.js"></script>
+<script src="../static/js/companyScripts.js"></script>
 </body>
 </html>

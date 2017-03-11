@@ -122,12 +122,12 @@ def company_view():
     return render_template('company.html', company_name=COMPANY_NAME)
 
 
-@app.route('/department/<department_name>')
+@app.route('/department/<department_name>/')
 def department_view(department_name):
     return render_template('department.html', department_name=department_name)
 
 
-@app.route('/employee/<employee_id>')
+@app.route('/employee/<employee_id>/')
 def employee_view(employee_id):
     return render_template('employee.html', employee_id=employee_id)
 
@@ -264,7 +264,11 @@ class PositionApi(ResourceCRUD):
                 position = Position(name=name, description=description)
                 db.session.add(position)
                 db.session.commit()
-                return {'success': 'position created'}, 201
+                return {'success': 'position created', 'position': {
+                    'id': position.id,
+                    'name': position.name,
+                    'description': position.description
+                }}, 201
             except IntegrityError:
                 return {'error': 'position with this name already exists'}, 400
 
