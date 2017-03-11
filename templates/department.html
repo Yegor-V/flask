@@ -2,9 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <script src="/../static/js/jquery-3.1.1.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <title>{{ department_name }}</title>
 </head>
 <body>
+<div id="department-info">
+    <div id="department-id" style="display: none">
+        {{ department.id }}
+    </div>
+    <div id="department-name">
+        {{ department.name }}
+    </div>
+    <div id="department-description">
+        {{ department.description }}
+    </div>
+</div>
 
+<br>
+Vacancies:
+<div id="vacancies">
+    {% for vacancy in department.vacancies %}
+        <div class="vacancy" id="vacancy-{{ vacancy.id }}">
+            <span id="vacancy-{{ vacancy.id }}-name">{{ vacancy.position.name }}</span>
+            Opened: <span id="vacancy-{{ vacancy.id }}-date-opened">{{ vacancy.str_date_opened }}</span>
+            <button id="vacancy-{{ vacancy.id }}-delete-button" class="vacancy-delete-button">Delete</button>
+            <button id="vacancy-{{ vacancy.id }}-hire-button" class="vacancy-hire-button">Hire</button>
+        </div>
+    {% endfor %}
+    <div id="vacancy-error"></div>
+    <button id="open-vacancy">Open Vacancy</button>
+</div>
+<br>
+Employees:
+<div id="employees">
+    {% for employee in department.employees %}
+        <div class="employee" id="employee-{{ employee.id }}">
+            {{ employee.name }} {{ employee.surname }} ({{ employee.position.name }})
+        </div>
+    {% endfor %}
+</div>
+
+
+<script src="/../static/js/departmentScripts.js"></script>
 </body>
 </html>

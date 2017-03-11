@@ -7,7 +7,7 @@ import time
 from sqlalchemy.exc import DataError, IntegrityError
 
 from credentials import POSTGRES_CREDENTIALS, SECRET_KEY
-from utils import to_timestamp
+from utils import to_timestamp, from_timestamp
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -62,6 +62,7 @@ class Position(db.Model):
     name = db.Column(db.String(DATABASE_STRING_LENGTH), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     vacancies = db.relationship('Vacancy', backref='position', lazy='dynamic', cascade='delete')
+    employees = db.relationship('Employee', backref='position', lazy='dynamic', cascade='delete')
 
     def __init__(self, name, description):
         self.name = name
@@ -86,6 +87,10 @@ class Vacancy(db.Model):
 
     def __repr__(self):
         return 'Vacancy for {}'.format(self.position.name)
+
+    @property
+    def str_date_opened(self):
+        return from_timestamp(self.date_opened)
 
 
 class Employee(db.Model):
@@ -124,7 +129,8 @@ def company_view():
 
 @app.route('/department/<department_name>/')
 def department_view(department_name):
-    return render_template('department.html', department_name=department_name)
+    department = Department.query.filter_by(name=department_name).first()
+    return render_template('department.html', department=department)
 
 
 @app.route('/employee/<employee_id>/')
@@ -329,6 +335,9 @@ class VacancyApi(ResourceCRUD):
         position_id = request.form.get('position_id')
         date_opened = request.form.get('date_opened')
 
+        print(request.form)
+        print(date_opened)
+
         if not position_id or not department_id:
             return {'error': 'position_id and department_id required'}, 400
         else:
@@ -355,7 +364,8 @@ class VacancyApi(ResourceCRUD):
                 return {
                     'success': 'vacancy created',
                     'vacancy': {
-                        'id': vacancy.id, 'department_id': vacancy.department_id, 'date_opened': vacancy.date_opened,
+                        'id': vacancy.id, 'department_id': vacancy.department_id,
+                        'date_opened': vacancy.str_date_opened,
                         'position': {'id': vacancy.position.id, 'name': vacancy.position.name}
                     }
                 }
@@ -466,8 +476,9 @@ class EmployeeApi(ResourceCRUD):
                                     is_department_leader=is_department_leader)
                 db.session.add(employee)
                 db.session.commit()
+                return {'success': 'employee created'}
             except Exception as e:
-                return {'error': 'failed to create employee: {}'.format(e)}
+                return {'error': 'failed to create employee: {}'.format(e)}, 400
 
     @staticmethod
     def patch():
