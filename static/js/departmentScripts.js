@@ -104,20 +104,14 @@ document.getElementById('vacancies').onclick = function (event) {
                 newVacancyDateOpened.textContent = data['vacancy']['date_opened'];
 
                 var newVacancyDeleteButton = document.createElement('button');
-                newVacancyDeleteButton.textContent = 'Delete';
+                newVacancyDeleteButton.textContent = 'Close Vacancy';
                 newVacancyDeleteButton.id = 'vacancy-' + vacancyId + '-delete-button';
                 newVacancyDeleteButton.className = 'vacancy-delete-button';
-
-                var newVacancyHireButton = document.createElement('button');
-                newVacancyHireButton.textContent = 'Hire';
-                newVacancyHireButton.id = 'vacancy-' + vacancyId + '-hire-button';
-                newVacancyHireButton.className = 'vacancy-hire-button';
 
                 newVacancyDiv.appendChild(newVacancyName);
                 newVacancyDiv.appendChild(openedWord);
                 newVacancyDiv.appendChild(newVacancyDateOpened);
                 newVacancyDiv.appendChild(newVacancyDeleteButton);
-                newVacancyDiv.appendChild(newVacancyHireButton);
                 parentDiv.appendChild(newVacancyDiv);
                 parentDiv.appendChild(createVacancyButton);
 
@@ -134,8 +128,85 @@ document.getElementById('vacancies').onclick = function (event) {
             }
         })
     }
-    if (clickedElementClass === 'vacancy-hire-button') {
-        console.log('hiring new person');
-    }
 };
 
+document.getElementById('employees').onclick = function (event) {
+    var employeeClickedElement = event.target;
+    if (employeeClickedElement.id === 'hire-new-employee-button') {
+        document.getElementById('hire-new-employee-div').innerHTML =
+            document.getElementById('invisibleEmployeeForm').innerHTML;
+        var vacancySelect = document.getElementById('new-employee-vacancy');
+        var departmentVacancies = document.getElementsByClassName('vacancy');
+        for (var m = 0, len = departmentVacancies.length; m < len; m++) {
+            var option = document.createElement('option');
+            option.value = departmentVacancies[m].id.split('-')[1];
+            option.textContent = departmentVacancies[m].childNodes[1].textContent +
+                ' ' + departmentVacancies[m].childNodes[3].textContent;
+            vacancySelect.appendChild(option);
+        }
+
+        $("#hire-new-employee-form").submit(function (event) {
+            event.preventDefault();
+
+            var nameError = document.getElementById('name-error').innerHTML = '';
+            var surnameError = document.getElementById('surname-error').innerHTML = '';
+            var emailError = document.getElementById('email-error').innerHTML = '';
+            var phoneError = document.getElementById('phone-error').innerHTML = '';
+            var birthDateError = document.getElementById('birth-date-error').innerHTML = '';
+            var StartWorkDateError = document.getElementById('start-work-date-error').innerHTML = '';
+
+            var name = document.getElementById('new-employee-name').value;
+            if(name === ''){
+                document.getElementById('name-error').innerHTML = 'name is required';
+                return
+            }
+
+            var surname = document.getElementById('new-employee-surname').value;
+            if(surname === ''){
+                document.getElementById('surname-error').innerHTML = 'surname is required';
+                return
+            }
+
+            $.ajax('/api/employee/', {
+                type: 'POST',
+                data: {
+                    'vacancy_id': document.getElementById('new-employee-vacancy').value,
+                    'name': name,
+                    'surname': document.getElementById('new-employee-surname').value,
+                    'email': document.getElementById('new-employee-email').value,
+                    'birth_date': document.getElementById('new-employee-birth-date').value,
+                    'start_work_date': document.getElementById('new-employee-start-work-date').value,
+                    'is_department_leader': document.getElementById('new-employee-is-department-leader').value
+                },
+                success: function (data) {
+                    var buttonIsBack = document.createElement('button');
+                    buttonIsBack.id = 'hire-new-employee-button';
+                    buttonIsBack.textContent = 'Hire New Employee';
+
+                    var hireDiv = document.getElementById('hire-new-employee-div');
+                    hireDiv.innerHTML = '';
+                    hireDiv.appendChild(buttonIsBack);
+
+                    var employeeDiv = document.createElement('div');
+                    employeeDiv.className = 'employee';
+                    employeeDiv.id = 'employee-' + data['employee']['id'];
+
+                    var employeeLink = document.createElement('a');
+                    employeeLink.href = '/employee/' + data['employee']['id'] + '/';
+                    employeeLink.textContent = data['employee']['name'] + ' ' + data['employee']['surname'] +
+                        ' (' + data['employee']['position'] + ')';
+
+                    employeeDiv.appendChild(employeeLink);
+                    document.getElementById('employees').appendChild(employeeDiv);
+
+                    hireDiv.parentNode.insertBefore(employeeDiv, hireDiv)
+
+                },
+                error: function () {
+                    document.getElementById('employee-error').innerHTML = 'error hiring new employee'
+                }
+            })
+        });
+
+    }
+};

@@ -335,9 +335,6 @@ class VacancyApi(ResourceCRUD):
         position_id = request.form.get('position_id')
         date_opened = request.form.get('date_opened')
 
-        print(request.form)
-        print(date_opened)
-
         if not position_id or not department_id:
             return {'error': 'position_id and department_id required'}, 400
         else:
@@ -457,26 +454,28 @@ class EmployeeApi(ResourceCRUD):
         If is_department_leader is not set -> will be set to False.
         :return: success/error json
         """
-        position_id = request.form.get('position_id')
-        department_id = request.form.get('department_id')
+        vacancy_id = request.form.get('vacancy_id')
         name = request.form.get('name')
         surname = request.form.get('surname')
         email = request.form.get('email')
         phone = request.form.get('phone')
-        birth_date = request.form.get('birth_date')
-        start_work_date = request.form.get('start_work_date')
+        birth_date = to_timestamp(request.form.get('birth_date'))
+        start_work_date = to_timestamp(request.form.get('start_work_date'))
         is_department_leader = request.form.get('is_department_leader')
 
-        if not all((position_id, department_id, name, surname)):
-            return {'error': 'position_id, department_id, name, surname required'}, 400
+        if not all((vacancy_id, name, surname)):
+            return {'error': 'vacancy_id, name, surname required'}, 400
         else:
             try:
-                employee = Employee(position_id=position_id, department_id=department_id, name=name, surname=surname,
-                                    email=email, phone=phone, birth_date=birth_date, start_work_date=start_work_date,
-                                    is_department_leader=is_department_leader)
+                vacancy = Vacancy.query.filter_by(id=vacancy_id).first()
+                employee = Employee(position_id=vacancy.position.id, department_id=vacancy.department.id,
+                                    name=name, surname=surname, email=email, phone=phone, birth_date=birth_date,
+                                    start_work_date=start_work_date, is_department_leader=is_department_leader)
                 db.session.add(employee)
                 db.session.commit()
-                return {'success': 'employee created'}
+                return {'success': 'employee created',
+                        'employee': {'id': employee.id, 'name': employee.name,
+                                     'surname': employee.surname, 'position': employee.position.name}}
             except Exception as e:
                 return {'error': 'failed to create employee: {}'.format(e)}, 400
 

@@ -29,8 +29,7 @@ Vacancies:
         <div class="vacancy" id="vacancy-{{ vacancy.id }}">
             <span id="vacancy-{{ vacancy.id }}-name">{{ vacancy.position.name }}</span>
             Opened: <span id="vacancy-{{ vacancy.id }}-date-opened">{{ vacancy.str_date_opened }}</span>
-            <button id="vacancy-{{ vacancy.id }}-delete-button" class="vacancy-delete-button">Delete</button>
-            <button id="vacancy-{{ vacancy.id }}-hire-button" class="vacancy-hire-button">Hire</button>
+            <button id="vacancy-{{ vacancy.id }}-delete-button" class="vacancy-delete-button">Close Vacancy</button>
         </div>
     {% endfor %}
     <div id="vacancy-error"></div>
@@ -41,12 +40,51 @@ Employees:
 <div id="employees">
     {% for employee in department.employees %}
         <div class="employee" id="employee-{{ employee.id }}">
-            {{ employee.name }} {{ employee.surname }} ({{ employee.position.name }})
+            <a href="/employee/{{ employee.id }}/">
+                {{ employee.name }} {{ employee.surname }} ({{ employee.position.name }})
+            </a>
         </div>
     {% endfor %}
+    <div id="employee-error"></div>
+    <div id="hire-new-employee-div">
+        <button id="hire-new-employee-button">Hire New Employee</button>
+    </div>
 </div>
 
+<script id="invisibleEmployeeForm" language="text">
+<form id="hire-new-employee-form" action="/api/employee/" method="post">
 
+    <label for="new-employee-vacancy">Vacancy: </label>
+    <select id="new-employee-vacancy" name="vacancy_id"></select><br>
+
+    <label for="new-employee-name">Name: </label>
+    <input id="new-employee-name" type="text" name="name"><div id="name-error"></div><br>
+
+    <label for="new-employee-surname">Surname: </label>
+    <input id="new-employee-surname" type="text" name="surname"><div id="surname-error"></div><br>
+
+    <label for="new-employee-email">Email: </label>
+    <input id="new-employee-email" type="text" name="email"><div id="email-error"></div><br>
+
+    <label for="new-employee-phone">Phone: </label>
+    <input id="new-employee-phone" type="text" name="phone"><div id="phone-error"></div><br>
+
+    <label for="new-employee-birth-date">Birth Date: </label>
+    <input id="new-employee-birth-date" type="text" name="birth_date"><div id="birth-date-error"></div><br>
+
+    <label for="new-employee-start-work-date">Start Work: </label>
+    <input id="new-employee-start-work-date" type="text" name="start_work_date"><div id="start-work-date-error"></div>
+    <br>
+
+    <label for="new-employee-is-department-leader">Is Department Leader: </label>
+    <input id="new-employee-is-department-leader" type="checkbox" name="is_department_leader"><br>
+
+    <input type="submit" value="Hire!">
+</form>
+
+
+
+</script>
 <script src="/../static/js/departmentScripts.js"></script>
 </body>
 </html>

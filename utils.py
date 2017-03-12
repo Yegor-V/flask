@@ -2,7 +2,12 @@ from datetime import datetime, timezone
 
 
 def to_timestamp(date_string):
-    dt = datetime.strptime(date_string, '%m/%d/%Y')
+    if date_string == '':
+        return None
+    try:
+        dt = datetime.strptime(date_string, '%m/%d/%Y')
+    except ValueError:
+        return 0
     return int(dt.replace(tzinfo=timezone.utc).timestamp())
 
 
