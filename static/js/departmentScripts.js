@@ -77,7 +77,7 @@ document.getElementById('vacancies').onclick = function (event) {
             type: 'POST',
             data: {
                 'position_id': document.getElementById('new-vacancy-position').value,
-                'department_id': document.getElementById('department-id').textContent,
+                'department_id': document.getElementById('department-id').textContent.replace(/\s+/g, ''),
                 'date_opened': document.getElementById('new-vacancy-date-opened').value
             },
             success: function (data) {
@@ -145,15 +145,18 @@ document.getElementById('employees').onclick = function (event) {
             vacancySelect.appendChild(option);
         }
 
+        $("#new-employee-birth-date").datepicker();
+        $("#new-employee-start-work-date").datepicker();
+
         $("#hire-new-employee-form").submit(function (event) {
             event.preventDefault();
 
-            var nameError = document.getElementById('name-error').innerHTML = '';
-            var surnameError = document.getElementById('surname-error').innerHTML = '';
-            var emailError = document.getElementById('email-error').innerHTML = '';
-            var phoneError = document.getElementById('phone-error').innerHTML = '';
-            var birthDateError = document.getElementById('birth-date-error').innerHTML = '';
-            var StartWorkDateError = document.getElementById('start-work-date-error').innerHTML = '';
+            document.getElementById('name-error').innerHTML = '';
+            document.getElementById('surname-error').innerHTML = '';
+            document.getElementById('email-error').innerHTML = '';
+            document.getElementById('phone-error').innerHTML = '';
+            document.getElementById('birth-date-error').innerHTML = '';
+            document.getElementById('start-work-date-error').innerHTML = '';
 
             var name = document.getElementById('new-employee-name').value;
             if(name === ''){

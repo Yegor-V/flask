@@ -56,6 +56,9 @@ emps.onclick = function (event) {
         document.getElementById('emp-birth-date-input').value = currentBirthDate;
         document.getElementById('emp-start-work-date-input').value = currentStartWorkDate;
         document.getElementById('emp-is-department-leader-input').value = currentIsDepartmentLeader;
+
+        $("#emp-birth-date-input").datepicker();
+        $("#emp-start-work-date-input").datepicker();
     }
     if(event.target.id == 'sendEditEmployeeForm'){
         $.ajax('/api/employee/', {
