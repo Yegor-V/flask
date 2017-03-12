@@ -135,7 +135,9 @@ def department_view(department_name):
 
 @app.route('/employee/<employee_id>/')
 def employee_view(employee_id):
-    return render_template('employee.html', employee_id=employee_id)
+    employee = Employee.query.filter_by(id=employee_id).first()
+    return render_template('employee.html', employee=employee, employee_birth_date=from_timestamp(employee.birth_date),
+                           employee_start_work_date=from_timestamp(employee.start_work_date))
 
 
 class ResourceCRUD(Resource):
@@ -488,15 +490,15 @@ class EmployeeApi(ResourceCRUD):
         """
         employee_id = request.form.get('employee_id')
 
-        new_name = request.form.get('employee_id')
-        new_surname = request.form.get('employee_id')
-        new_department_id = request.form.get('employee_id')
-        new_position_id = request.form.get('employee_id')
-        new_phone = request.form.get('employee_id')
-        new_email = request.form.get('employee_id')
-        new_birth_date = request.form.get('employee_id')
-        new_start_work_date = request.form.get('employee_id')
-        new_is_department_leader = request.form.get('employee_id')
+        new_name = request.form.get('name')
+        new_surname = request.form.get('surname')
+        new_department_id = request.form.get('department_id')
+        new_position_id = request.form.get('position_id')
+        new_phone = request.form.get('phone')
+        new_email = request.form.get('email')
+        new_birth_date = to_timestamp(request.form.get('birth_date'))
+        new_start_work_date = to_timestamp(request.form.get('start_work_date'))
+        new_is_department_leader = request.form.get('is_department_leader')
 
         if not employee_id:
             return {'error': 'employee_id is required'}, 400
@@ -513,11 +515,24 @@ class EmployeeApi(ResourceCRUD):
                     employee.position_id = new_position_id if new_position_id else None
                     employee.phone = new_phone if new_phone else None
                     employee.email = new_email if new_email else None
-                    employee.birth_date = new_birth_date if new_birth_date else None
-                    employee.start_work_date = new_start_work_date if new_start_work_date else None
-                    employee.is_department_leader = new_is_department_leader if new_is_department_leader else None
+                    employee.birth_date = new_birth_date if new_birth_date else 0
+                    employee.start_work_date = new_start_work_date if new_start_work_date else 0
+                    employee.is_department_leader = new_is_department_leader if new_is_department_leader else False
                     db.session.add(employee)
                     db.session.commit()
+                    return {'success': 'employee info updated',
+                            'employee': {
+                                'id': employee.id,
+                                'department': {'id': employee.department.id, 'name': employee.department.name},
+                                'position': {'id': employee.position.id, 'name': employee.position.name},
+                                'name': employee.name,
+                                'surname': employee.surname,
+                                'email': employee.email,
+                                'phone': employee.phone,
+                                'birth_date': from_timestamp(employee.birth_date),
+                                'start_work_date': from_timestamp(employee.start_work_date),
+                                'is_department_leader': employee.is_department_leader
+                            }}
                 except Exception as e:
                     return {'error': e}
         except DataError:

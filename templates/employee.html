@@ -2,9 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <script src="/static/js/jquery-3.1.1.js"></script>
+    <title>{{ employee.name }} {{ employee.surname }}</title>
 </head>
 <body>
+<span id="emp-id" style="display: none">{{ employee.id}}</span>
+<span id="current-department-id" style="display: none">{{ employee.department.id }}</span>
+<span id="current-position-id" style="display: none">{{ employee.position.id }}</span>
+<div id="emps">
+    Name: <span id="emp-name">{{ employee.name }}</span><br>
+    Surname: <span id="emp-surname">{{ employee.surname }}</span><br>
+    Position: <span id="emp-position">{{ employee.position.name }}</span><br>
+    Department: <span id="emp-department">{{ employee.department.name }}</span><br>
+    Email: <span id="emp-email">{{ employee.email }}</span><br>
+    Phone: <span id="emp-phone">{{ employee.phone }}</span><br>
+    Birth Date: <span id="emp-birth-date">{{ employee_birth_date }}</span><br>
+    Start Work Date: <span id="emp-start-work-date">{{ employee_start_work_date }}</span><br>
+    Is Department Leader: <span id="emp-is-department-leader">{{ employee.is_department_leader }}</span><br>
+    <button id="emp-edit-button">Edit</button>
+    <div id="emp-errors"></div>
+</div>
+<script src="/static/js/employeeScripts.js"></script>
 
+<script id="employeeForm" language="text">
+    <label for="emp-department-input">Department: </label>
+    <select id="emp-department-input" name="department_id"></select><br>
+
+    <label for="emp-position-input">Position: </label>
+    <select id="emp-position-input" name="position_id"></select><br>
+
+    <label for="emp-name-input">Name: </label>
+    <input id="emp-name-input" type="text" name="name"><div id="name-error"></div><br>
+
+    <label for="emp-surname-input">Surname: </label>
+    <input id="emp-surname-input" type="text" name="surname"><div id="surname-error"></div><br>
+
+    <label for="emp-email-input">Email: </label>
+    <input id="emp-email-input" type="text" name="email"><div id="email-error"></div><br>
+
+    <label for="emp-phone-input">Phone: </label>
+    <input id="emp-phone-input" type="text" name="phone"><div id="phone-error"></div><br>
+
+    <label for="emp-birth-date-input">Birth Date: </label>
+    <input id="emp-birth-date-input" type="text" name="birth_date"><div id="birth-date-error"></div><br>
+
+    <label for="emp-start-work-date-input">Start Work: </label>
+    <input id="emp-start-work-date-input" type="text" name="start_work_date"><div id="start-work-date-error"></div>
+    <br>
+
+    <label for="emp-is-department-leader-input">Is Department Leader: </label>
+    <input id="emp-is-department-leader-input" type="checkbox" name="is_department_leader"><br>
+
+    <button id="sendEditEmployeeForm">Edit Info</button>
+</script>
+<script id="employeeNOForm" language="text">
+    Name: <span id="emp-name"></span><br>
+    Surname: <span id="emp-surname"></span><br>
+    Position: <span id="emp-position"></span><br>
+    Department: <span id="emp-department"></span><br>
+    Email: <span id="emp-email"></span><br>
+    Phone: <span id="emp-phone"></span><br>
+    Birth Date: <span id="emp-birth-date"></span><br>
+    Start Work Date: <span id="emp-start-work-date"></span><br>
+    Is Department Leader: <span id="emp-is-department-leader"></span><br>
+    <button id="emp-edit-button">Edit</button>
+</script>
 </body>
 </html>
