@@ -1,9 +1,13 @@
+"""
+Needed to make dates as strings...
+"""
+
 from datetime import datetime, timezone
 
 
 def to_timestamp(date_string):
     if date_string == '':
-        return None
+        return 0
     try:
         dt = datetime.strptime(date_string, '%m/%d/%Y')
     except ValueError:
@@ -12,5 +16,9 @@ def to_timestamp(date_string):
 
 
 def from_timestamp(timestamp):
+    if not timestamp:
+        return ''
+    if int(timestamp) == 0:
+        return ''
     timestamp = int(timestamp)
     return datetime.utcfromtimestamp(timestamp).strftime('%m/%d/%Y')

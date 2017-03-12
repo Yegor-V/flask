@@ -94,4 +94,16 @@ emps.onclick = function (event) {
 
         })
     }
+    if(event.target.id == 'emp-fire-button') {
+        $.ajax('/api/employee/', {
+            type: 'DELETE',
+            data: {'id': document.getElementById('emp-id').textContent},
+            success: function () {
+                window.location.replace('/')
+            },
+            error: function () {
+                document.getElementById('emp-errors').innerHTML = 'Failed to FIRE employee. His Father is your boss'
+            }
+        })
+    }
 };

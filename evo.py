@@ -42,6 +42,18 @@ def get_department_employees(department_id):
     return [get_object_dict(e) for e in Employee.query.filter_by(department_id=department_id)]
 
 
+def make_new_department_leader(department_id, employee_id):
+    employees = Employee.query.filter_by(department_id=department_id)
+    for employee in employees:
+        if employee.id != employee_id:
+            employee.is_department_leader = False
+        else:
+            employee.is_department_leader = True
+        db.session.add(employee)
+    db.session.commit()  # TODO: Make in 1 query
+
+
+
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(DATABASE_STRING_LENGTH), unique=True, nullable=False)
@@ -509,15 +521,16 @@ class EmployeeApi(ResourceCRUD):
                 return {'error': 'employee {} not found'.format(employee_id)}, 400
             else:
                 try:
-                    employee.name = new_name if new_name else None
-                    employee.surname = new_surname if new_surname else None
-                    employee.department_id = new_department_id if new_department_id else None
-                    employee.position_id = new_position_id if new_position_id else None
-                    employee.phone = new_phone if new_phone else None
-                    employee.email = new_email if new_email else None
+                    employee.name = new_name
+                    employee.surname = new_surname
+                    employee.department_id = new_department_id
+                    employee.position_id = new_position_id
+                    employee.phone = new_phone if new_phone else ''
+                    employee.email = new_email if new_email else ''
                     employee.birth_date = new_birth_date if new_birth_date else 0
                     employee.start_work_date = new_start_work_date if new_start_work_date else 0
-                    employee.is_department_leader = new_is_department_leader if new_is_department_leader else False
+                    if new_is_department_leader and new_is_department_leader in (True, 'true', 'True', 'yes'):
+                        make_new_department_leader(new_department_id, employee_id)
                     db.session.add(employee)
                     db.session.commit()
                     return {'success': 'employee info updated',
